@@ -74,15 +74,21 @@
         let ws;
         let username;
 
-        document.getElementById('login-form').addEventListener('submit', (e) => {
+        const loginform = document.querySelector("#login-form");
+        const logincontainer = document.querySelector("#login-container");
+        const chatcontainer = document.querySelector("#chat-container");
+
+        loginform.addEventListener("submit", (e) => {
             e.preventDefault();
-            username = document.getElementById('username').value.trim();
+            username = document.querySelector("#username").value.trim();
             if (username) {
-                document.getElementById('login-container').style.display = 'none';
-                document.getElementById('chat-container').style.display = 'block';
+                logincontainer.style.display = "none";
+                chatcontainer.style.display = "block";
                 connectWebSocket();
             }
         });
+
+        document.addEventListener("submit");
 
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
