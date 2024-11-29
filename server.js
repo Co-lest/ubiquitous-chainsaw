@@ -10,6 +10,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const server = http.createServer(async (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
     if (req.method === "GET") {
         let filePath;
         if (req.url === '/') {
@@ -32,8 +36,8 @@ const server = http.createServer(async (req, res) => {
             res.end(content);
         }catch (err) {
             res.statusCode = 404;
+            res.end("File not found!");
             console.error(`Error getting the html file`, err)
-            return;
         }
     }
 });
@@ -41,21 +45,34 @@ const server = http.createServer(async (req, res) => {
 const wss = new WebSocketServer( { server } )
 // let backendUsername;
 
-const client = new Set()
+const clients = new Set()
 
 wss.on("connection", (ws) => {
-    client.add(ws);
+    clients.add(ws);
+    
+    console.log(`A new client connected with username: ${receivedData.personUsing}`);
 
     ws.on("message", (data) => {
         let receivedData = JSON.parse(data);
-        console.log(`${receivedData}`);
-        console.log(`A new client connected with username: ${receivedData.username}`);
+        console.log(receivedData); // {typeObj:"join", personUsing:"Mark", messagePassed:""}
+        //todo send a message that one is connected
+
+        clients.forEach((client) => {
+            if (client.readyState === ws.OPEN) {
+                client.send(JSON.stringify({
+                    typeObj: receivedData.typeObj,
+                    username: receivedData.personUsing,
+                    messagePassed: receivedData.messagePassed
+            }));
+            }
+        });
     });
 
     ws.on("close", (data) => {
-        let receivedData = JSON.parse(data)
-        console.log(receivedData);
-        console.log(`A client with username: ${receivedData.username} disconnected!`);
+        let receivedData = JSON.parse(data);
+        console.log(data);
+        console.log(`A client with username: ${receivedData.personUsing} disconnected!`);
+        //todo send a message that one is disconnected
     });
 });
 

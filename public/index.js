@@ -3,6 +3,7 @@ const logincontainer = document.querySelector("#login-container");
 const chatcontainer = document.querySelector("#chat-container");
 const messageform = document.querySelector("#message-form");
 const messageinput = document.querySelector("#message");
+const messages = document.getElementById("messages");
 
 let ws;
 let username;
@@ -18,23 +19,11 @@ loginform.addEventListener("submit", (e) => {
   }
 });
 
-messageform.addEventListener("submit", (e) => {
-  e.preventDefault(); // prevents the page from reloading
-  let message = messageinput.value.trim();
-
-  // todo add websocket
-  if (message && ws.readyState === WebSocket.OPEN) {
-    // console.log(username, message);
-    ws.send(JSON.stringify({type: "message", personUsing: username, messagePassed: message}));
-    messageinput.value = "";
-  } else {
-    console.log(`Failed to connect to server!`);
-    let warnPar = document.createElement("p");
-    warnPar.style.color = "red";
-    warnPar.textContent = "Failed to connect to server! Try again."
-    document.body.appendChild(warnPar);
-  }
-});
+let sendObj = {
+  typeObj: "",
+  personUsing: "",
+  messagePassed: "",
+};
 
 const connectWebSocket = (username) => {
   let protocol = "";
@@ -48,56 +37,67 @@ const connectWebSocket = (username) => {
 
   ws.addEventListener("open", () => {
     console.log(`Connected to server`);
-    ws.send(JSON.stringify({ type: "join", personUsing: username }));
+    sendObj.typeObj = "join";
+    sendObj.personUsing = username;
+    //ws.send(JSON.stringify({ typeObj: "join", personUsing: username }));
+    //console.log(sendObj);
+    ws.send(JSON.stringify(sendObj));
   });
 
   ws.addEventListener("close", () => {
-    ws.send(JSON.stringify({ type: "close", personUsing: username }));
+    console.log(`You were disconnected from the server!`);
+    sendObj.typeObj = "close";
+    sendObj.personUsing = username;
+    // ws.send(JSON.stringify({ typeObj: "close", personUsing: username }));
+    //console.log(sendObj);
+    ws.send(JSON.stringify(sendObj));
+    setTimeout(connectWebSocket, 1000);
   });
 
   ws.addEventListener("message", (mes) => {
-    let data = JSON.stringify(mes.data);
+    let data = JSON.parse(mes.data); // {typeObj:"join", personUsing:"Mark", messagePassed:""}
+    console.log(data);
 
-    // if (condition) {
-      
-    // }
+    if (data.typeObj === "join") {
+      let joinDiv = document.createElement("p");
+      joinDiv.textContent = `User: ${data.username}, joined the chat`;
+      messages.appendChild(joinDiv);
+    } else if (data.typeObj === "message") {
+      const messageDiv = document.createElement("div");
+      messageDiv.className = `message ${
+        data.username === username ? "sent" : "received"
+      }`;
+      messageDiv.textContent = `${data.username}: ${data.messagePassed}`;
+      messages.appendChild(messageDiv);
+      messages.scrollTop = messages.scrollHeight;
+    } else if(data.typeObj === "close") {
+      let closeDiv = document.createElement("p");
+      closeDiv.textContent = `User: ${data.username}, left the chat!`;
+      messages.appendChild(closeDiv);
+    }
   });
-}
+};
 
-// function connectWebSocket() {
-//   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-//   ws = new WebSocket(`${protocol}//${window.location.host}`);
+messageform.addEventListener("submit", (e) => {
+  e.preventDefault(); // prevents the page from reloading
+  let message = messageinput.value.trim();
 
-//   ws.onopen = () => {
-//     console.log("Connected to chat server");
-//     ws.send(JSON.stringify({ type: "join", username }));
-//   };
-
-//   ws.onmessage = (event) => {
-//     const data = JSON.parse(event.data);
-//     const messages = document.getElementById("messages");
-//     const messageDiv = document.createElement("div");
-//     messageDiv.className = `message ${
-//       data.username === username ? "sent" : "received"
-//     }`;
-//     messageDiv.textContent = `${data.username}: ${data.message}`;
-//     messages.appendChild(messageDiv);
-//     messages.scrollTop = messages.scrollHeight;
-//   };
-
-//   ws.onclose = () => {
-//     console.log("Disconnected from chat server");
-//     setTimeout(connectWebSocket, 1000);
-//   };
-// }
-
-//  if (message && ws.readyState === WebSocket.OPEN) {
-//     ws.send(
-//       JSON.stringify({
-//         type: "message",
-//         username,
-//         message,
-//       })
-//     );
-//   }
+  if (message && ws.readyState === WebSocket.OPEN) {
+    // console.log(username, message);
+    ws.send(
+      JSON.stringify({
+        typeObj: "message",
+        personUsing: username,
+        messagePassed: message,
+      })
+    );
+    messageinput.value = "";
+  } else {
+    console.log(`Failed to connect to server!`);
+    let warnPar = document.createElement("p");
+    warnPar.style.color = "red";
+    warnPar.textContent = "Failed to connect to server! check link or internet connectivity then Try again.";
+    document.body.appendChild(warnPar);
+  }
+});
 
