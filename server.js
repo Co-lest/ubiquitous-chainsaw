@@ -29,7 +29,7 @@ const server = http.createServer(async (req, res) => {
             const contentType = {
                 '.html': 'text/html',
                 '.css': 'text/css',
-                '.js': 'text/javascript'
+                '.js': 'text/javascript' 
             }[ext] || 'text/plain';
 
             res.writeHead(200, { 'Content-Type': contentType });
@@ -50,12 +50,12 @@ const clients = new Set()
 wss.on("connection", (ws) => {
     clients.add(ws);
     
-    console.log(`A new client connected with username: ${receivedData.personUsing}`);
+    //console.log(`A new client connected with username: ${receivedData.personUsing}`);
+    // TODO when a client connects send a message
 
     ws.on("message", (data) => {
         let receivedData = JSON.parse(data);
         console.log(receivedData); // {typeObj:"join", personUsing:"Mark", messagePassed:""}
-        //todo send a message that one is connected
 
         clients.forEach((client) => {
             if (client.readyState === ws.OPEN) {
@@ -68,12 +68,12 @@ wss.on("connection", (ws) => {
         });
     });
 
-    ws.on("close", (data) => {
-        let receivedData = JSON.parse(data);
-        console.log(data);
-        console.log(`A client with username: ${receivedData.personUsing} disconnected!`);
-        //todo send a message that one is disconnected
-    });
+    // ws.on("close", (data) => {
+    //     let receivedData = JSON.parse(data);
+    //     console.log(data);
+    //     console.log(`A client with username: ${receivedData.personUsing} disconnected!`);
+    //     //todo send a message that one is disconnected
+    // });
 });
 
 server.listen(port, () => {

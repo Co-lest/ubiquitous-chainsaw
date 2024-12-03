@@ -19,6 +19,29 @@ loginform.addEventListener("submit", (e) => {
   }
 });
 
+messageform.addEventListener("submit", (e) => {
+  e.preventDefault(); // prevents the page from reloading
+  let message = messageinput.value.trim();
+
+  if (message && ws.readyState === WebSocket.OPEN) {
+    // console.log(username, message);
+    ws.send(
+      JSON.stringify({
+        typeObj: "message",
+        personUsing: username,
+        messagePassed: message,
+      })
+    );
+    messageinput.value = "";
+  } else {
+    console.log(`Failed to connect to server!`);
+    let warnPar = document.createElement("p");
+    warnPar.style.color = "red";
+    warnPar.textContent = "Failed to connect to server! check link or internet connectivity then Try again.";
+    document.body.appendChild(warnPar);
+  }
+});
+
 let sendObj = {
   typeObj: "",
   personUsing: "",
@@ -39,7 +62,8 @@ const connectWebSocket = (username) => {
     console.log(`Connected to server`);
     sendObj.typeObj = "join";
     sendObj.personUsing = username;
-    //ws.send(JSON.stringify({ typeObj: "join", personUsing: username }));
+    sendObj.messagePassed = "";
+    //ws.send(JSON.stringify({ typeObj: "join", personUsing: username, messagePaseed: ""}));
     //console.log(sendObj);
     ws.send(JSON.stringify(sendObj));
   });
@@ -48,10 +72,11 @@ const connectWebSocket = (username) => {
     console.log(`You were disconnected from the server!`);
     sendObj.typeObj = "close";
     sendObj.personUsing = username;
-    // ws.send(JSON.stringify({ typeObj: "close", personUsing: username }));
+    sendObj.messagePassed = "";
+    // ws.send(JSON.stringify({ typeObj: "close", personUsing: username, messagePaseed: ""}));
     //console.log(sendObj);
     ws.send(JSON.stringify(sendObj));
-    setTimeout(connectWebSocket, 1000);
+    //setTimeout(connectWebSocket, 1000);
   });
 
   ws.addEventListener("message", (mes) => {
@@ -77,27 +102,4 @@ const connectWebSocket = (username) => {
     }
   });
 };
-
-messageform.addEventListener("submit", (e) => {
-  e.preventDefault(); // prevents the page from reloading
-  let message = messageinput.value.trim();
-
-  if (message && ws.readyState === WebSocket.OPEN) {
-    // console.log(username, message);
-    ws.send(
-      JSON.stringify({
-        typeObj: "message",
-        personUsing: username,
-        messagePassed: message,
-      })
-    );
-    messageinput.value = "";
-  } else {
-    console.log(`Failed to connect to server!`);
-    let warnPar = document.createElement("p");
-    warnPar.style.color = "red";
-    warnPar.textContent = "Failed to connect to server! check link or internet connectivity then Try again.";
-    document.body.appendChild(warnPar);
-  }
-});
 
