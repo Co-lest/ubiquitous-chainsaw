@@ -68,7 +68,7 @@ const connectWebSocket = (username) => {
     ws.send(JSON.stringify(sendObj));
   });
 
-  ws.addEventListener("close", () => {
+  ws.addEventListener("close", () => { // not working
     console.log(`You were disconnected from the server!`);
     sendObj.typeObj = "close";
     sendObj.personUsing = username;

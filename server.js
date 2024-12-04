@@ -3,6 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs/promises";
 import { WebSocketServer } from "ws";
+import "dotenv/config";
 
 const port = process.env.PORT || 3000;
 
@@ -72,7 +73,15 @@ wss.on("connection", (ws) => {
     //     let receivedData = JSON.parse(data);
     //     console.log(data);
     //     console.log(`A client with username: ${receivedData.personUsing} disconnected!`);
-    //     //todo send a message that one is disconnected
+    //     clients.forEach((client) => {
+    //         if (client.readyState = ws.OPEN) {
+    //             ws.send(JSON.stringify({
+    //                 typeObj: receivedData.typeObj,
+    //                 username: receivedData.personUsing,
+    //                 messagePassed: receivedData.messagePassed
+    //         }));
+    //         }
+    //     })
     // });
 });
 
