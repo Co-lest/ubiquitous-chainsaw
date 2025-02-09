@@ -89,11 +89,23 @@ const connectWebSocket = (username) => {
       messages.appendChild(joinDiv);
     } else if (data.typeObj === "message") {
       const messageDiv = document.createElement("div");
+      const timeReceived = new Date();
+      let timeChat = document.createElement("p");
+      timeChat.textContent = `${timeReceived.getHours()}: ${timeReceived.getMinutes()} HRS`;
+      timeChat.setAttribute("id", "time");
       messageDiv.className = `message ${
         data.username === username ? "sent" : "received"
       }`;
       messageDiv.textContent = `${data.username}: ${data.messagePassed}`;
+
+      if (data.username === username) {
+        timeChat.style.marginLeft = "2rem";
+      } else {
+        timeChat.style.marginRight = "2rem";
+      }
+
       messages.appendChild(messageDiv);
+      messages.appendChild(timeChat);
       messages.scrollTop = messages.scrollHeight;
     } else if(data.typeObj === "close") {
       let closeDiv = document.createElement("p");
