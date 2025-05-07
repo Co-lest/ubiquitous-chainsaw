@@ -50,6 +50,7 @@ const clients = new Set()
 
 wss.on("connection", (ws) => {
     clients.add(ws);
+
     
     //console.log(`A new client connected with username: ${receivedData.personUsing}`);
     // TODO when a client connects send a message
