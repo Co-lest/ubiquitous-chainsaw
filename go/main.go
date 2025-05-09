@@ -1,6 +1,9 @@
 package main
 
 import (
+	"chat-app/public/handlers"
+	"chat-app/public/models"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,19 +12,31 @@ import (
 	"github.com/rs/cors"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "This is a document!")
-}
-
 func main() {
+	port := flag.String("port", "8080", "port to serve on")
+	directory := flag.String("dir", "./public", "directory of static files")
+	flag.Parse()
+
+	// Initialize hub
+	hub := models.NewHub()
+	go hub.Run()
+
+	// Initialize user service
+	userService := models.NewUserService()
+
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/", handler)
+	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		handlers.ServeWs(hub, userService, w, r)
+	})
 
-	fs := http.FileServer(http.Dir("./public"))
+	mux.HandleFunc("/api/register", userService.RegisterHandler)
+	mux.HandleFunc("/api/login", userService.RegisterHandler)
+	mux.HandleFunc("/api/users", userService.RegisterHandler)
+
+	// Serve static files
+	fs := http.FileServer(http.Dir(*directory))
 	mux.Handle("/", fs)
-
-	port := ":1111"
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
@@ -30,23 +45,23 @@ func main() {
 		AllowCredentials: true,
 	}).Handler(mux)
 
+	// Start server
 	server := &http.Server{
-		Addr:    port,
+		Addr:    ":" + *port,
 		Handler: corsHandler,
 	}
 
-	if _, err := os.Stat("./public"); os.IsNotExist(err) {
-		err := os.MkdirAll("./public", 0755)
+	fmt.Printf("Starting server on :%s\n", *port)
+	fmt.Printf("Serving static files from: %s\n", *directory)
+
+	if _, err := os.Stat(*directory); os.IsNotExist(err) {
+		err := os.MkdirAll(*directory, 0755)
 		if err != nil {
 			log.Fatal("Error creating directory:", err)
 		}
 	}
 
-	// fmt.Println("Server listenign on port 1111")
-	// err := http.ListenAndServe(port, mux)
-	// if err != nil {
-	// 	log.Fatalf("Error creating a server on port 1111")
-	// }
-
-	log.Fatal(server.ListenAndServe())
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatal("Error creating server!")
+	}
 }
