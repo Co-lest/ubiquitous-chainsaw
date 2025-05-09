@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"chat-app/models"
+	"chat-app/public/models"
 	"log"
 	"net/http"
 )
@@ -14,7 +14,7 @@ func ServeWs(hub *models.Hub, userService *models.UserService, w http.ResponseWr
 		return
 	}
 
-	conn, err := models.upgrader.Upgrade(w, r, nil)
+	conn, err := models.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Error upgrading connection:", err)
 		return
@@ -22,16 +22,16 @@ func ServeWs(hub *models.Hub, userService *models.UserService, w http.ResponseWr
 
 	// Create new client
 	client := &models.Client{
-		hub:      hub,
-		conn:     conn,
-		send:     make(chan []byte, 256),
-		username: username,
+		Hub:      hub,
+		Conn:     conn,
+		Send:     make(chan []byte, 256),
+		Username: username,
 	}
 
 	// Register client with hub
-	client.hub.register <- client
+	client.Hub.Register <- client // debug only his register is undefined
 
 	// Start goroutines for reading and writing
-	go client.writePump()
-	go client.readPump()
+	go client.WritePump()
+	go client.ReadPump()
 }

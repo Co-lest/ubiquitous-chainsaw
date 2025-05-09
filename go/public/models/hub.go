@@ -30,7 +30,7 @@ type Hub struct {
 	clients map[*Client]bool
 
 	// Register requests from clients
-	register chan *Client
+	Register chan *Client
 
 	// Unregister requests from clients
 	unregister chan *Client
@@ -45,7 +45,7 @@ type Hub struct {
 func NewHub() *Hub {
 	return &Hub{
 		clients:    make(map[*Client]bool),
-		register:   make(chan *Client),
+		Register:   make(chan *Client),
 		unregister: make(chan *Client),
 		broadcast:  make(chan *Message),
 		history:    make([]*Message, 0),
@@ -55,10 +55,10 @@ func NewHub() *Hub {
 func (h *Hub) Run() {
 	for {
 		select {
-		case client := <-h.register:
+		case client := <-h.Register:
 			welcomeMsg := &Message{
 				Type:      SystemMessage,
-				Content:   client.username + " has joined the chat",
+				Content:   client.Username + " has joined the chat",
 				Sender:    "system",
 				Timestamp: time.Now(),
 				IsPrivate: false,
@@ -66,9 +66,9 @@ func (h *Hub) Run() {
 			h.broadcast <- welcomeMsg
 
 			for _, msg := range h.history { // send caht history to client
-				if !msg.IsPrivate || msg.Sender == client.username || msg.Recipient == client.username {
+				if !msg.IsPrivate || msg.Sender == client.Username || msg.Recipient == client.Username {
 					msgBytes, _ := json.Marshal(msg)
-					client.send <- msgBytes
+					client.Send <- msgBytes
 				}
 			}
 			h.broadcastUserList()
@@ -76,11 +76,11 @@ func (h *Hub) Run() {
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
-				close(client.send)
+				close(client.Send)
 
 				leaveMsg := &Message{
 					Type:      SystemMessage,
-					Content:   client.username + " has left the chat",
+					Content:   client.Username + " has left the chat",
 					Sender:    "system",
 					Timestamp: time.Now(),
 					IsPrivate: false,
@@ -102,11 +102,11 @@ func (h *Hub) Run() {
 			for client := range h.clients {
 				// If private message, send only to sender and recipient
 				if message.IsPrivate {
-					if client.username == message.Sender || client.username == message.Recipient {
-						client.send <- messageBytes
+					if client.Username == message.Sender || client.Username == message.Recipient {
+						client.Send <- messageBytes
 					}
 				} else {
-					client.send <- messageBytes
+					client.Send <- messageBytes
 				}
 			}
 		}
@@ -117,7 +117,7 @@ func (h *Hub) broadcastUserList() {
 	// Get list of online users
 	onlineUsers := make([]string, 0)
 	for client := range h.clients {
-		onlineUsers = append(onlineUsers, client.username)
+		onlineUsers = append(onlineUsers, client.Username)
 	}
 
 	// Create user list message
@@ -131,6 +131,6 @@ func (h *Hub) broadcastUserList() {
 	// Send to all clients
 	userListBytes, _ := json.Marshal(userListMsg)
 	for client := range h.clients {
-		client.send <- userListBytes
+		client.Send <- userListBytes
 	}
 }
